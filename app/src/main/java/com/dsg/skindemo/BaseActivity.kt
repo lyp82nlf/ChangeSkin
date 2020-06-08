@@ -22,6 +22,7 @@ open class BaseActivity : AppCompatActivity() {
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        //要在super.onCreate调用 否则会报错
         if (ifAllowChangeSkin) {
             skinFactory = SkinFactory()
             skinFactory.delegate = delegate

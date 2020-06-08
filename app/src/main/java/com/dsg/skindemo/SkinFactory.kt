@@ -17,8 +17,10 @@ import java.lang.reflect.Constructor
  */
 class SkinFactory : LayoutInflater.Factory2 {
 
+    //我们并不需要代理所有的创建过程 所以很多事情都可以交给原先的Delegate类实现
     lateinit var delegate: AppCompatDelegate
 
+    //收集需要换肤的View
     var skinList = arrayListOf<SkinView>()
 
 
@@ -28,10 +30,10 @@ class SkinFactory : LayoutInflater.Factory2 {
         context: Context,
         attrs: AttributeSet
     ): View? {
+        //因为我们并不需要实现所有流程 所以createView可以交给原先的代理类完成
         var view = delegate.createView(parent, name, context, attrs)
-        //TODO: 关键点2 收集需要换肤的View
         if (view == null) {
-            //万一系统创建出来是空，那么我们来补救
+            //万一系统创建出来是空，那么我们来补救 这边也是参考了系统实现 我们之前应该也都分析了
             mConstructorArgs[0] = context
             try {
                 if (-1 == name.indexOf('.')) { //不包含. 说明不带包名，那么我们帮他加上包名
@@ -43,22 +45,23 @@ class SkinFactory : LayoutInflater.Factory2 {
                 e.printStackTrace()
             }
         }
+        //关键点 收集需要换肤的View
         collectSkinView(context, attrs, view)
 
         return view
     }
 
     private fun collectSkinView(context: Context, attrs: AttributeSet, view: View?) {
-        var obtainStyledAttributes = context.obtainStyledAttributes(attrs, R.styleable.Skinable)
-        var isSupport = obtainStyledAttributes.getBoolean(R.styleable.Skinable_isSupport, false)
+        //这边判断了是否使用isSupport自定义属性 但是并没有对自定义View做很好的兼容
+        //对于自定义View  我们可以采用换肤接口来实现 具体实现可以大家自己尝试一下
+        val obtainStyledAttributes = context.obtainStyledAttributes(attrs, R.styleable.Skinable)
+        val isSupport = obtainStyledAttributes.getBoolean(R.styleable.Skinable_isSupport, false)
         if (isSupport) {
-            var skinView = SkinView()
-
-
+            val skinView = SkinView()
             //找到支持换肤的view
-            val Len = attrs.attributeCount
+            val len = attrs.attributeCount
             val attrMap = hashMapOf<String, String>()
-            for (i in 0 until Len) { //遍历所有属性
+            for (i in 0 until len) { //遍历所有属性
                 val attrName = attrs.getAttributeName(i)
                 val attrValue = attrs.getAttributeValue(i)
                 attrMap[attrName] = attrValue //全部存起来
@@ -72,7 +75,9 @@ class SkinFactory : LayoutInflater.Factory2 {
         }
     }
 
+
     fun changeSkins() {
+        //遍历换肤类 实现换肤
         for (skin in skinList) {
             skin.changeSkin()
         }
@@ -108,8 +113,8 @@ class SkinFactory : LayoutInflater.Factory2 {
             //那么如果是自定义组件呢
             //那么如果是自定义组件呢
             if (view is ZeroView) { //那么这样一个对象，要换肤，就要写针对性的方法了，每一个控件需要用什么样的方式去换，尤其是那种，自定义的属性，怎么去set，
-// 这就对开发人员要求比较高了，而且这个换肤接口还要暴露给 自定义View的开发人员,他们去定义
-// ....
+                // 这就对开发人员要求比较高了，而且这个换肤接口还要暴露给 自定义View的开发人员,他们去定义
+                // ....
             }
         }
     }
